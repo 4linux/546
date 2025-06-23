@@ -1,0 +1,26 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-safe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-safe
+  template:
+    metadata:
+      labels:
+        app: nginx-safe
+    spec:
+      containers:
+      - name: nginx
+        image: docker.io/bitnami/nginx
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault

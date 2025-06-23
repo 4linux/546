@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: backend
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: docker.io/mysql:5.7
+
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-configmaps
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-configmaps
+                  key: MYSQL_USER
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: MYSQL_PASSWORD
+
+          volumeMounts:
+            - name: pvc-backend
+              mountPath: /var/lib/mysql
+            - name: backend-db-config
+              mountPath: /docker-entrypoint-initdb.d/
+            - name: dump-usuarios
+              mountPath: /dump/
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+
+          livenessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'SELECT 1' >/dev/null 2>&1 || exit 1
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          securityContext:
+            runAsNonRoot: true
+
+      volumes:
+        - name: pvc-backend
+          persistentVolumeClaim:
+            claimName: pvc-backend
+
+        - name: backend-db-config
+          configMap:
+            name: backend-db-config
+
+        - name: dump-usuarios
+          configMap:
+            name: dump-usuarios

@@ -1,0 +1,19 @@
+services:
+  webserver:
+    image: docker.io/php:7.2-apache
+    container_name: webserver
+    hostname: webserver
+    ports:
+      - "8080:80"
+    volumes:
+      - ./site:/var/www/html:Z
+    networks:
+      4labs:
+        ipv4_address: 10.90.0.100    
+networks:
+ 4labs:
+   driver: bridge
+   ipam:
+     driver: default
+     config:
+       - subnet: 10.90.0.0/24        

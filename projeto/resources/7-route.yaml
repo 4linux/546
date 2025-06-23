@@ -1,0 +1,15 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  host: frontend-developer.apps-crc.testing
+  to:
+    kind: Service
+    name: frontend
+    weight: 100
+  port:
+    targetPort: 8080
